@@ -117,7 +117,7 @@ class macOSLAPS(object):
                          ' date of 01/01/2001 in Active Directory to'
                          ' force a password change...')
                 self.expirationtime = '126227988000000000'
-
+                self.set_config_settings('ForcePassUpdate',True)
             else:
                 try:
                     self.expirationtime = values[self.lapsattributes[1]]
