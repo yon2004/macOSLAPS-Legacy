@@ -15,7 +15,7 @@
 # Script was Last Updated June 2, 2017
 # #############################################################
 
-from Foundation import CFPreferencesCopyAppValue, CFPreferencesSetAppValue
+from Foundation import CFPreferencesCopyAppValue, CFPreferencesSetValue, CFPreferencesSynchronize
 from datetime import datetime, timedelta
 from logging import (basicConfig as log_config,
                      error as log_error, info as log_info)
@@ -73,9 +73,10 @@ class macOSLAPS(object):
         '''Function to retrieve configuration settings from
         /Library/Preferences or /Library/Managed Preferences'''
         preference_file = self.bundleid
-        preference_value = CFPreferencesSetAppValue(preference_key,
-                                                    preference_value,
-                                                    preference_file)
+        preference_value = CFPreferencesSetValue(preference_key,
+                                                 preference_value,
+                                                 preference_file)
+        CFPreferencesSynchronize(preference_file)
 
     def connect_to_ad(self):
         '''Function to connect and pull information from Active Directory
@@ -117,7 +118,7 @@ class macOSLAPS(object):
                          ' date of 01/01/2001 in Active Directory to'
                          ' force a password change...')
                 self.expirationtime = '126227988000000000'
-                self.set_config_settings('ForcePassUpdate',True)
+                self.set_config_settings('ForcePassUpdate',False)
             else:
                 try:
                     self.expirationtime = values[self.lapsattributes[1]]
