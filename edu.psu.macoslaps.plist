@@ -10,5 +10,9 @@
     <integer>14</integer>
     <key>RemovePassChars</key>
     <string>{}[]|</string>
+    <key>RemoveKeyChain</key>
+    </true>
+    <key>ForcePassUpdate</key>
+    </false>
 </dict>
 </plist>

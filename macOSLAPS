@@ -15,7 +15,7 @@
 # Script was Last Updated June 2, 2017
 # #############################################################
 
-from Foundation import CFPreferencesCopyAppValue
+from Foundation import CFPreferencesCopyAppValue, CFPreferencesSetAppValue
 from datetime import datetime, timedelta
 from logging import (basicConfig as log_config,
                      error as log_error, info as log_info)
@@ -39,10 +39,11 @@ class macOSLAPS(object):
     bundleid = 'edu.psu.macoslaps'
     defaultpreferences = {
         'LocalAdminAccount': 'admin',
-        'PasswordLength': 12,
-        'DaysTillExpiration': 60,
+        'PasswordLength': 14,
+        'DaysTillExpiration': 30,
         'RemoveKeyChain': True,
-        'RemovePassChars': '\''
+        'RemovePassChars': '{}[]|\'',
+        'ForcePassUpdate': False
     }
     #  Define Active Directory Attributes
     adpath = ''
@@ -67,6 +68,14 @@ class macOSLAPS(object):
             preference_value = normalize(
                 'NFKD', preference_value).encode('ascii', 'ignore')
         return preference_value
+
+    def set_config_settings(self, preference_key, preference_value):
+        '''Function to retrieve configuration settings from
+        /Library/Preferences or /Library/Managed Preferences'''
+        preference_file = self.bundleid
+        preference_value = CFPreferencesSetAppValue(preference_key,
+                                                    preference_value,
+                                                    preference_file)
 
     def connect_to_ad(self):
         '''Function to connect and pull information from Active Directory
@@ -101,14 +110,23 @@ class macOSLAPS(object):
             self.lapsattributes[1] = '{0:}'.format(
                 'dsAttrTypeNative:ms-Mcs-AdmPwdExpirationTime')
             # Get Expiration Time of Password
-            try:
-                self.expirationtime = values[self.lapsattributes[1]]
-            except Exception:
-                log_info('There has never been a random password generated'
-                         ' for this device. Setting a default expiration'
+            force_update = self.get_config_settings('ForcePassUpdate')
+            if force_update:
+                log_info(' Force password change is enabled.'
+                         ' Setting a default expiration'
                          ' date of 01/01/2001 in Active Directory to'
                          ' force a password change...')
                 self.expirationtime = '126227988000000000'
+
+            else:
+                try:
+                    self.expirationtime = values[self.lapsattributes[1]]
+                except Exception:
+                    log_info('There has never been a random password generated'
+                            ' for this device. Setting a default expiration'
+                            ' date of 01/01/2001 in Active Directory to'
+                            ' force a password change...')
+                    self.expirationtime = '126227988000000000'
         except Exception as error:
             log_error(error)
             exit(1)
