@@ -15,7 +15,11 @@
 # Script was Last Updated June 2, 2017
 # #############################################################
 
-from Foundation import CFPreferencesCopyAppValue, CFPreferencesSetValue, CFPreferencesSynchronize, kCFPreferencesCurrentUser, kCFPreferencesAnyHost
+from Foundation import (CFPreferencesCopyValue,
+						CFPreferencesSetValue, 
+						CFPreferencesSynchronize, 
+						kCFPreferencesAnyUser, 
+						kCFPreferencesAnyHost)
 from datetime import datetime, timedelta
 from logging import (basicConfig as log_config,
                      error as log_error, info as log_info)
@@ -60,12 +64,15 @@ class macOSLAPS(object):
         '''Function to retrieve configuration settings from
         /Library/Preferences or /Library/Managed Preferences'''
         preference_file = self.bundleid
-        preference_value = CFPreferencesCopyAppValue(preference_key,
-                                                     preference_file,
-                                                     kCFPreferencesCurrentUser, 
-                                                     kCFPreferencesAnyHost)
+        preference_value = CFPreferencesCopyValue(preference_key,
+        										  preference_file,
+        										  kCFPreferencesAnyUser,
+        										  kCFPreferencesAnyHost)
         if preference_value is None:
             preference_value = self.defaultpreferences.get(preference_key)
+            log_info('Default value used for %s value:%s', preference_key,preference_value)
+        else:
+        	log_info('plist value used for %s value:%s', preference_key,preference_value)
         if isinstance(preference_value, unicode):
             preference_value = normalize(
                 'NFKD', preference_value).encode('ascii', 'ignore')
@@ -78,9 +85,11 @@ class macOSLAPS(object):
         preference_value = CFPreferencesSetValue(preference_key,
                                                  preference_value,
                                                  preference_file,
-                                                 kCFPreferencesCurrentUser, 
+                                                 kCFPreferencesAnyUser, 
                                                  kCFPreferencesAnyHost)
-        CFPreferencesSynchronize(preference_file)
+        CFPreferencesSynchronize(preference_file,
+                                 kCFPreferencesAnyUser, 
+                                 kCFPreferencesAnyHost)
 
     def connect_to_ad(self):
         '''Function to connect and pull information from Active Directory
