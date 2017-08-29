@@ -15,11 +15,7 @@
 # Script was Last Updated June 2, 2017
 # #############################################################
 
-from Foundation import (CFPreferencesCopyValue,
-						CFPreferencesSetValue, 
-						CFPreferencesSynchronize, 
-						kCFPreferencesAnyUser, 
-						kCFPreferencesAnyHost)
+from plistlib import readPlist, writePlist
 from datetime import datetime, timedelta
 from logging import (basicConfig as log_config,
                      error as log_error, info as log_info)
@@ -40,7 +36,7 @@ class macOSLAPS(object):
     # Current time
     now = datetime.now()
     # Preference Variables
-    bundleid = 'edu.psu.macoslaps'
+    settingspath = "/Library/Preferences/edu.psu.macoslaps.plist"
     defaultpreferences = {
         'LocalAdminAccount': 'admin',
         'PasswordLength': 14,
@@ -60,36 +56,50 @@ class macOSLAPS(object):
     log_config(filename='/Library/Logs/macOSLAPS.log',
                level=10, format=log_format)
 
-    def get_config_settings(self, preference_key):
-        '''Function to retrieve configuration settings from
-        /Library/Preferences or /Library/Managed Preferences'''
-        preference_file = self.bundleid
-        preference_value = CFPreferencesCopyValue(preference_key,
-        										  preference_file,
-        										  kCFPreferencesAnyUser,
-        										  kCFPreferencesAnyHost)
-        if preference_value is None:
-            preference_value = self.defaultpreferences.get(preference_key)
-            log_info('Default value used for %s value:%s', preference_key,preference_value)
-        else:
-        	log_info('plist value used for %s value:%s', preference_key,preference_value)
-        if isinstance(preference_value, unicode):
-            preference_value = normalize(
-                'NFKD', preference_value).encode('ascii', 'ignore')
-        return preference_value
+    def __init__(self):
+        self._Settings_Load()
+        #print(self.get_setting('LocalAdminAccount'))
+        #print(self.get_setting('DaysTillExpiration'))
+        #print(self.get_setting('PasswordLength'))
+        #print( self.get_setting('RemoveKeyChain'))
+        #print(self.get_setting('ForcePassUpdate'))
+        #print(self.get_setting('ForcePassUpdate112'))
+        #self.set_setting('ForcePassUpdate', False)
+        #exit(1)
 
-    def set_config_settings(self, preference_key, preference_value):
-        '''Function to retrieve configuration settings from
-        /Library/Preferences or /Library/Managed Preferences'''
-        preference_file = self.bundleid
-        preference_value = CFPreferencesSetValue(preference_key,
-                                                 preference_value,
-                                                 preference_file,
-                                                 kCFPreferencesAnyUser, 
-                                                 kCFPreferencesAnyHost)
-        CFPreferencesSynchronize(preference_file,
-                                 kCFPreferencesAnyUser, 
-                                 kCFPreferencesAnyHost)
+    def get_setting(self,key):
+        if key in self.settings:
+            log_info("setting:%s found in plist use value of %s", 
+                     key,
+                     self.settings[key])
+            return self.settings[key]
+        elif key in self.defaultpreferences:
+            log_info("setting:%s not found in plist use default of %s", 
+                     key,
+                     self.defaultpreferences[key])
+            return self.defaultpreferences[key]
+        else:
+            log_info("setting:%s not found in plist or default return None Type", 
+                     key)
+            return None
+
+    def set_setting(self,key,value):
+        self.settings[key] = value
+        self._Settings_Save()
+
+    def _Settings_Load(self):
+        try:
+            self.settings = readPlist(self.settingspath)
+        except:
+            log_info("Generate Local plist from defaults")
+            self.settings = self.defaultpreferences
+            self._Settings_Save()
+
+    def _Settings_Save(self):
+        try:
+            writePlist(self.settings, self.settingspath)
+        except Exception as e:
+            log_info('plist save failed with error:%s', e)
 
     def connect_to_ad(self):
         '''Function to connect and pull information from Active Directory
@@ -124,35 +134,24 @@ class macOSLAPS(object):
             self.lapsattributes[1] = '{0:}'.format(
                 'dsAttrTypeNative:ms-Mcs-AdmPwdExpirationTime')
             # Get Expiration Time of Password
-            force_update = self.get_config_settings('ForcePassUpdate')
-            if force_update:
-                log_info(' Force password change is enabled.'
-                         ' Setting a default expiration'
-                         ' date of 01/01/2001 in Active Directory to'
-                         ' force a password change...')
+            try:
+                self.expirationtime = values[self.lapsattributes[1]]
+            except Exception:
+                log_info('There has never been a random password generated'
+                        ' for this device. Setting a default expiration'
+                        ' date of 01/01/2001 in Active Directory to'
+                        ' force a password change...')
                 self.expirationtime = '126227988000000000'
-                self.set_config_settings('ForcePassUpdate',False)
-            else:
-                try:
-                    self.expirationtime = values[self.lapsattributes[1]]
-                except Exception:
-                    log_info('There has never been a random password generated'
-                            ' for this device. Setting a default expiration'
-                            ' date of 01/01/2001 in Active Directory to'
-                            ' force a password change...')
-                    self.expirationtime = '126227988000000000'
         except Exception as error:
             log_error(error)
             exit(1)
 
-    @staticmethod
-    def make_random_password(length):
+    def make_random_password(self, length):
         '''Generate a Random Password
         Thanks Mike Lynn - @frogor'''
         # Characters used for random password
         characters = ascii_letters + punctuation + digits
-        remove_pass_characters = macOSLAPS().get_config_settings(
-            'RemovePassChars')
+        remove_pass_characters = self.get_setting('RemovePassChars')
         # Remove Characters if specified
         if remove_pass_characters:
             characters = characters.translate(None, remove_pass_characters)
@@ -188,12 +187,22 @@ class macOSLAPS(object):
         admin password and write it to Active Directory if
         needed - Thanks to Tom Burgin and Ben Toms
                            @tomjburgin, @macmuleblog'''
-        local_admin = LAPS.get_config_settings('LocalAdminAccount')
-        exp_days = LAPS.get_config_settings('DaysTillExpiration')
-        pass_length = LAPS.get_config_settings('PasswordLength')
-        keychain_remove = LAPS.get_config_settings('RemoveKeyChain')
-        password = LAPS.make_random_password(pass_length)
-        formatted_expiration_time = LAPS.windows_epoch_time_converter(
+        local_admin = self.get_setting('LocalAdminAccount')
+        exp_days = self.get_setting('DaysTillExpiration')
+        pass_length = self.get_setting('PasswordLength')
+        keychain_remove = self.get_setting('RemoveKeyChain')
+        force_update = self.get_setting('ForcePassUpdate')
+        password = self.make_random_password(pass_length)
+
+        #Force a Password change
+        if force_update:
+            log_info(' Force password change is enabled.'
+                     ' Setting a default expiration'
+                     ' date of 01/01/2001 in Active Directory to'
+                     ' force a password change...')
+            self.expirationtime = '126227988000000000'
+
+        formatted_expiration_time = self.windows_epoch_time_converter(
             'epoch', exp_days)
         # Determine if the password expired and then change it
         if formatted_expiration_time < self.now:
@@ -245,6 +254,7 @@ class macOSLAPS(object):
                              'in mind that this may cause keychain '
                              'prompts and the old password may not '
                              'be accessible.')
+                self.set_setting('ForcePassUpdate', False)
             except Exception as error:
                 log_error(error)
                 exit(1)
