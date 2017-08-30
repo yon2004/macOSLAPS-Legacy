@@ -18,10 +18,11 @@ The following parameters must be set or the application will use the defaults:
 **DaysTillExpiration** - Expiration date of random password. Default is 60 Days  
 **PasswordLength** - Length of randomly generated password. Default is 12  
 **RemoveKeyChain** - Remove the local admin keychains after password change. (Recommended)  
-**RemovePassChars** - Exclude any characters you'd like from the randomly generated password (In String format)  
+**RemovePassChars** - Exclude any characters you'd like from the randomly generated password (In String format)
+**ForcePassUpdate** - The next run will force a change of password even if it has not expire. Default is False. Set this to True if you are reconnecting a new computer to an exiting AD account.
 
-These parameters are set in the location /Libary/Preferences/edu.psu.macoslaps.plist
-or you can use your MDM's Custom Settings to set these values.
+These parameters are set in the location /Libary/Preferences/edu.psu.macoslaps.plist this file
+will be automaticly generated if it does not exist.
 
 Exclusions
 ----------------
@@ -38,7 +39,7 @@ Logging
 -------
 The script will also perform logging so that you know when the password is changed
 and its new expiration date or when the current unchanged password will expire. This
-file is stored in /Library/Logs/ as macOSLAPS.log
+file is stored in /Library/Logs/macOSLAPS.log
 
 Feedback
 --------
