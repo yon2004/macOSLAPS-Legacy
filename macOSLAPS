@@ -59,25 +59,25 @@ class macOSLAPS(object):
     def __init__(self):
         self._Settings_Load()
 
-    def get_setting(self,key):
-        '''used to get a setting, will try plist settings then 
+    def get_setting(self, key):
+        '''used to get a setting, will try plist settings then
         return to the defaults'''
         if key in self.settings:
-            log_info("setting:%s found in plist use value of %s", 
+            log_info("setting:%s found in plist use value of %s",
                      key,
                      self.settings[key])
             return self.settings[key]
         elif key in self.defaultpreferences:
-            log_info("setting:%s not found in plist use default of %s", 
+            log_info("setting:%s not found in plist use default of %s",
                      key,
                      self.defaultpreferences[key])
             return self.defaultpreferences[key]
         else:
-            log_info("setting:%s not found in plist or default return None Type", 
+            log_info("setting:%s not found in plist or default return None Type",
                      key)
             return None
 
-    def set_setting(self,key,value):
+    def set_setting(self, key, value):
         '''called to create or update a setting value'''
         self.settings[key] = value
         self._Settings_Save()
@@ -115,7 +115,7 @@ class macOSLAPS(object):
                                              ad_info['DomainNameDns'])
             # Computer Path
             self.computerpath = 'Computers/{0:}'.format(
-                                ad_info['TrustAccount'])
+                ad_info['TrustAccount'])
             # Use Open Directory To Connect to Active Directory
             node, error = ODNode.nodeWithSession_name_error_(
                 ODSession.defaultSession(), self.adpath, None)
@@ -136,9 +136,9 @@ class macOSLAPS(object):
                 self.expirationtime = values[self.lapsattributes[1]]
             except Exception:
                 log_info('There has never been a random password generated'
-                        ' for this device. Setting a default expiration'
-                        ' date of 01/01/2001 in Active Directory to'
-                        ' force a password change...')
+                         ' for this device. Setting a default expiration'
+                         ' date of 01/01/2001 in Active Directory to'
+                         ' force a password change...')
                 self.expirationtime = '126227988000000000'
         except Exception as error:
             log_error(error)
