@@ -58,16 +58,10 @@ class macOSLAPS(object):
 
     def __init__(self):
         self._Settings_Load()
-        #print(self.get_setting('LocalAdminAccount'))
-        #print(self.get_setting('DaysTillExpiration'))
-        #print(self.get_setting('PasswordLength'))
-        #print( self.get_setting('RemoveKeyChain'))
-        #print(self.get_setting('ForcePassUpdate'))
-        #print(self.get_setting('ForcePassUpdate112'))
-        #self.set_setting('ForcePassUpdate', False)
-        #exit(1)
 
     def get_setting(self,key):
+        '''used to get a setting, will try plist settings then 
+        return to the defaults'''
         if key in self.settings:
             log_info("setting:%s found in plist use value of %s", 
                      key,
@@ -84,22 +78,26 @@ class macOSLAPS(object):
             return None
 
     def set_setting(self,key,value):
+        '''called to create or update a setting value'''
         self.settings[key] = value
         self._Settings_Save()
 
     def _Settings_Load(self):
+        '''Loads Settings from plist if the plist does not exit
+        of is corrupt it will generate a new one with the defaults'''
         try:
             self.settings = readPlist(self.settingspath)
-        except:
-            log_info("Generate Local plist from defaults")
+        except Exception as error:
+            log_info("Generate Local plist from defaults due to error: %s" % error)
             self.settings = self.defaultpreferences
             self._Settings_Save()
 
     def _Settings_Save(self):
+        '''outputs the settings to the plist file'''
         try:
             writePlist(self.settings, self.settingspath)
-        except Exception as e:
-            log_info('plist save failed with error:%s', e)
+        except Exception as error:
+            log_info('plist save failed with error:%s', error)
 
     def connect_to_ad(self):
         '''Function to connect and pull information from Active Directory
