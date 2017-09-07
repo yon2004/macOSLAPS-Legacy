@@ -42,7 +42,7 @@ class macOSLAPS(object):
         'PasswordLength': 14,
         'DaysTillExpiration': 30,
         'RemoveKeyChain': True,
-        'ComplexPassword': False,
+        'ComplexPassword': True,
         'ForcePassUpdate': False
     }
     #  Define Active Directory Attributes
