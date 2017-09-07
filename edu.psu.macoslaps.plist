@@ -12,7 +12,7 @@
 	<integer>14</integer>
 	<key>RemoveKeyChain</key>
 	<true/>
-	<key>RemovePassChars</key>
-	<string>{}[]|'</string>
+	<key>ComplexPassword</key>
+	<true/>
 </dict>
 </plist>

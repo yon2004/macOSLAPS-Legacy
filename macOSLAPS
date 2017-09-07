@@ -42,7 +42,7 @@ class macOSLAPS(object):
         'PasswordLength': 14,
         'DaysTillExpiration': 30,
         'RemoveKeyChain': True,
-        'RemovePassChars': '{}[]|\'',
+        'ComplexPassword': False,
         'ForcePassUpdate': False
     }
     #  Define Active Directory Attributes
@@ -146,17 +146,18 @@ class macOSLAPS(object):
             log_error(error)
             exit(1)
 
-    def make_random_password(self, length):
-        '''Generate a Random Password
-        Thanks Mike Lynn - @frogor'''
+    def make_random_password(self):
+        '''Makes a password'''
         # Characters used for random password
-        characters = ascii_letters + punctuation + digits
-        remove_pass_characters = self.get_setting('RemovePassChars')
+        password_complex = self.get_setting('ComplexPassword')
+        password_length = self.get_setting('PasswordLength')
         # Remove Characters if specified
-        if remove_pass_characters:
-            characters = characters.translate(None, remove_pass_characters)
+        if password_complex:
+            characters = ascii_letters + punctuation + digits
+        else:
+            characters = ascii_letters + digits
         password = []
-        for i in range(length):
+        for i in range(password_length):
             password.insert(i, choice(characters))
         return ''.join(password)
 
@@ -189,10 +190,9 @@ class macOSLAPS(object):
                            @tomjburgin, @macmuleblog'''
         local_admin = self.get_setting('LocalAdminAccount')
         exp_days = self.get_setting('DaysTillExpiration')
-        pass_length = self.get_setting('PasswordLength')
         keychain_remove = self.get_setting('RemoveKeyChain')
         force_update = self.get_setting('ForcePassUpdate')
-        password = self.make_random_password(pass_length)
+        password = self.make_random_password()
 
         #Force a Password change
         if force_update:
