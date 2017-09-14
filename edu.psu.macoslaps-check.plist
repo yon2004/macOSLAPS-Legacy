@@ -36,6 +36,6 @@
   </array>
   <!-- Record errors only because output is recorded to /Library/Logs/macosLAPS.log-->
   <key>StandardErrorPath</key>
-  <string>/tmp/lilydaleheights.macoslaps.daemon.log.txt</string>     
+  <string>/tmp/macOSLAPS.txt</string>     
 </dict>
 </plist>
